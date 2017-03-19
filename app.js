@@ -32,6 +32,7 @@ function executeQuery(queryStr, success) {
 
 var express = require('express');
 var bodyParser = require('body-parser');
+const uuidV4 = require('uuid/v4');
 var app = express();
 var port = 8080;
 
@@ -47,10 +48,24 @@ app.get('/loginfo', function (req, res) {
   });
 })
 
-app.post('/addlog', function (req, res) {
-  console.log(req.body);
-  var response = {message: 'Everything is ok'};
-  res.json(response);
+app.post('/ping', function (req, res) {
+  var bodyObj = req.body;
+console.log(JSON.stringify(bodyObj));
+  var queryStr = "INSERT INTO LOGINFO VALUES ('";
+  queryStr += uuidV4()+"','"+bodyObj.message+"','"+bodyObj.messagedate+"','"+bodyObj.type+"')";
+  console.log(queryStr);
+  executeQuery(queryStr, function(results) {
+    var querySystem = "SELECT * FROM SYSTEM";
+    executeQuery(querySystem, function(results) {
+      var response;
+      if(results.length!=0) {
+        response = {message: 'System active', opCode: 1, systemInfo: results};  
+      } else {
+        response = {message: 'Everything is ok', opCode: 0};
+      }
+      res.json(response);     
+    });
+  });
 });
 
 app.listen(port, function () {
