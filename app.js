@@ -1,6 +1,7 @@
 //DATABASE INITIALIZATION
 const pg = require('pg');
 const connectionString = process.env.DATABASE_URL || 'postgres://localhost:5432/alberite';
+const uuidV4 = require('uuid/v4');
 
 var config = {
   user: 'alberite', //env var: PGUSER 
@@ -26,13 +27,31 @@ function executeQuery(queryStr, success) {
     });
   });
 }
+
+function writeLogInfo(logInfo, callback) {
+console.log(logInfo.messagedate);
+  var queryStr = "INSERT INTO LOGINFO VALUES ('";
+  queryStr += uuidV4()+"','"+logInfo.message+"','"+logInfo.messagedate+"','"+logInfo.type+"')";
+  console.log(queryStr);
+  executeQuery(queryStr, function(results) {
+    callback();
+  });
+
+};
+
 //FINISHED DATABASE INITIALIZATION 
 
+//SYSTEM ACTIONS
 
+function deleteSystemActions(callback) {
+  var queryStr = "DELETE FROM SYSTEM";
+  executeQuery(queryStr, function(results) {
+    callback();
+  });
+};
 
 var express = require('express');
 var bodyParser = require('body-parser');
-const uuidV4 = require('uuid/v4');
 var app = express();
 var port = 8080;
 
@@ -51,15 +70,12 @@ app.get('/loginfo', function (req, res) {
 app.post('/ping', function (req, res) {
   var bodyObj = req.body;
 console.log(JSON.stringify(bodyObj));
-  var queryStr = "INSERT INTO LOGINFO VALUES ('";
-  queryStr += uuidV4()+"','"+bodyObj.message+"','"+bodyObj.messagedate+"','"+bodyObj.type+"')";
-  console.log(queryStr);
-  executeQuery(queryStr, function(results) {
+  writeLogInfo(bodyObj, function(results) {
     var querySystem = "SELECT * FROM SYSTEM";
     executeQuery(querySystem, function(results) {
       var response;
       if(results.length!=0) {
-        response = {message: 'System active', opCode: 1, systemInfo: results};  
+        response = {message: 'System active', opCode: 1, systemInfo: results};
       } else {
         response = {message: 'Everything is ok', opCode: 0};
       }
@@ -67,6 +83,36 @@ console.log(JSON.stringify(bodyObj));
     });
   });
 });
+
+app.post('/systemInitiating',  function (req, res) {
+  var bodyObj = req.body;
+  writeLogInfo(bodyObj, function(results) {
+    //Delete system action from table
+    deleteSystemActions(function() {
+      response = {message: 'Everything is ok', opCode: 0};
+      res.json(response);
+    });
+  });
+});
+
+app.post('/systemHasStarted',  function (req, res) {
+  var bodyObj = req.body;
+  writeLogInfo(bodyObj, function(results) {
+    var response = {message: 'Everything is ok', opCode: 0};
+    res.json(response);
+  });
+});
+
+
+app.post('/systemHasFinished',  function (req, res) {
+  var bodyObj = req.body;
+  writeLogInfo(bodyObj, function(results) {
+    var response = {message: 'Everything is ok', opCode: 0};
+    res.json(response);
+  });
+});
+
+
 
 app.listen(port, function () {
   console.log('Example app listening on port '+port+'!')
