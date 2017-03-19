@@ -29,10 +29,8 @@ function executeQuery(queryStr, success) {
 }
 
 function writeLogInfo(logInfo, callback) {
-console.log(logInfo.messagedate);
   var queryStr = "INSERT INTO LOGINFO VALUES ('";
-  queryStr += uuidV4()+"','"+logInfo.message+"','"+logInfo.messagedate+"','"+logInfo.type+"')";
-  console.log(queryStr);
+  queryStr += uuidV4()+"','"+logInfo.message+"','"+logInfo.messagedate+"','"+logInfo.type+"', '"+logInfo.externalip+"')";
   executeQuery(queryStr, function(results) {
     callback();
   });
@@ -61,7 +59,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 app.get('/loginfo', function (req, res) {
-  var queryStr = 'SELECT id, message, messagedate, type FROM loginfo ORDER BY messagedate';
+  var queryStr = 'SELECT id, message, messagedate, type, externalip FROM loginfo ORDER BY messagedate';
   executeQuery(queryStr, function(results) {
     res.json(results);
   });
