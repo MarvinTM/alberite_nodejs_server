@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/MarvinTM/alberite_nodejs_server#readme",
   "dependencies": {
+    "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "pg": "^6.1.4"
   }
