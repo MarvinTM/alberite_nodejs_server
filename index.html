@@ -1,0 +1,51 @@
+<html>
+<head>
+</head>
+<body>
+<script>
+setInterval(function() {
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+      if (xmlhttp.status == 200) {
+	var logTable = "<table style='width:100%'><tr'><th style='width:50%'>MENSAJE</th><th style='width:10'>FECHA</th><th>IP</th></tr>";
+        var logInfo = JSON.parse(xmlhttp.responseText);
+        logInfo.forEach(function(logrow) {
+          logTable+="<tr><td>"+logrow.message+"</td><td>"+new Date(logrow.messagedate).toLocaleString()+"</td><td>"+logrow.externalip+"</td>";
+        });        
+console.log(logTable);
+       document.getElementById("logContainer").innerHTML = logTable; 
+      } else if (xmlhttp.status == 400) {
+        console.error('There was an error 400');
+      } else {
+        console.error('something else other than 200 was returned');
+      }
+    }
+  };
+
+  xmlhttp.open("GET", "logInfo", true);
+  xmlhttp.send();
+
+}, 1000);
+
+</script>
+<div id="mainContainer">
+<div id="leftContainer" style="width:48%;float:left;padding:5px">
+<div style="border-width: 1px;border-style: solid;padding:10px;">
+<div>ESTADO</div>
+<div id="statusContainer">estado</div>
+</div>
+<div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+<div>OPCIONES</div>
+<div id="optionsContainer">contenido</div>
+</div>
+</div>
+<div id="rightContainer" style="width:48%;float:left;padding:5px;">
+<div style="border-width: 1px;border-style: solid;padding:10px">
+<div>LOG</div>
+<div id="logContainer">el log</div>
+</div>
+</div>
+</div>
+</body>
+</html>
