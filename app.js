@@ -52,6 +52,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
 var port = 8080;
+var fs = require('fs');
 
 app.use(bodyParser.urlencoded({
     extended: true
@@ -59,7 +60,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 app.get('/loginfo', function (req, res) {
-  var queryStr = 'SELECT id, message, messagedate, type, externalip FROM loginfo ORDER BY messagedate';
+  var queryStr = 'SELECT id, message, messagedate, type, externalip FROM loginfo ORDER BY messagedate DESC LIMIT 20';
   executeQuery(queryStr, function(results) {
     res.json(results);
   });
@@ -111,7 +112,15 @@ app.post('/systemHasFinished',  function (req, res) {
 });
 
 
+//PAGES ENDPOINTS
+
+app.get('/', function(req, res) {
+  fs.readFile('index.html', 'utf8', function(err, data) {
+    res.send(data);
+  });
+});
+
 
 app.listen(port, function () {
-  console.log('Example app listening on port '+port+'!')
+  console.log('Alberite starting!! Listening on port '+port+'!')
 })
