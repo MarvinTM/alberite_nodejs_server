@@ -8,10 +8,18 @@ setInterval(function() {
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
       if (xmlhttp.status == 200) {
-	var logTable = "<table style='width:100%'><tr'><th style='width:50%'>MENSAJE</th><th style='width:10'>FECHA</th><th>IP</th></tr>";
+	var logTable = "<table style='width:100%'><tr'><th style='width:40%'>MENSAJE</th><th style='width:50%'>FECHA</th><th>IP</th></tr>";
         var logInfo = JSON.parse(xmlhttp.responseText);
         logInfo.forEach(function(logrow) {
-          logTable+="<tr><td>"+logrow.message+"</td><td>"+new Date(logrow.messagedate).toLocaleString()+"</td><td>"+logrow.externalip+"</td>";
+          var bgColor;
+          if(logrow.type==='INFO'){
+            bgColor = '#00ff00';
+          } else if (logrow.type==='ACTION') {
+            bgColor = '#00ffff';
+          } else {
+            bgColor = '#ff0000';
+          }
+          logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.message+"</td><td>"+new Date(logrow.messagedate).toLocaleString()+"</td><td>"+logrow.externalip+"</td>";
         });        
 console.log(logTable);
        document.getElementById("logContainer").innerHTML = logTable; 
@@ -28,16 +36,44 @@ console.log(logTable);
 
 }, 1000);
 
+function element(id) {
+  return document.getElementById(id);
+};
+
+function doRequestForSystemAction(actionId) {
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+      if (xmlhttp.status == 200) {
+        alert('Éxito');
+      } else if (xmlhttp.status == 400) {
+        alert('Error al iniciar acción: '+400);
+      } else {
+        alert('Error al iniciar acción: '+xmlhttp.status);
+      }
+    }
+  };
+
+  xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration=5&", true);
+  xmlhttp.send();
+}
+
 </script>
 <div id="mainContainer">
 <div id="leftContainer" style="width:48%;float:left;padding:5px">
 <div style="border-width: 1px;border-style: solid;padding:10px;">
 <div>ESTADO</div>
-<div id="statusContainer">estado</div>
+<div id="statusContainer">OK</div>
 </div>
 <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
 <div>OPCIONES</div>
-<div id="optionsContainer">contenido</div>
+<div id="optionsContainer">
+<div id="poolPhase1">Regar Piscina fase 1</div>
+<div id="poolPhase2">Regar Piscina fase 2</div>
+<div id="mainPhase1">Regar Aspersores fase 1</div>
+<div id="backyard">Regar Zona cerezo</div>
+<div id="orchard">Regar Huerta</div>
+</div>
 </div>
 </div>
 <div id="rightContainer" style="width:48%;float:left;padding:5px;">
@@ -47,5 +83,36 @@ console.log(logTable);
 </div>
 </div>
 </div>
+
+<script>
+element('poolPhase1').style.cursor = 'pointer';
+element('poolPhase2').style.cursor = 'pointer';
+element('mainPhase1').style.cursor = 'pointer';
+element('backyard').style.cursor = 'pointer';
+element('orchard').style.cursor = 'pointer';
+
+element('poolPhase1').onclick = function() {
+  doRequestForSystemAction(1);
+};
+
+element('poolPhase2').onclick = function() {
+  doRequestForSystemAction(2);
+};
+
+element('mainPhase1').onclick = function() {
+  doRequestForSystemAction(3);
+};
+
+element('backyard').onclick = function() {
+  doRequestForSystemAction(4);
+};
+
+element('orchard').onclick = function() {
+  doRequestForSystemAction(5);
+};
+
+
+
+</script>
 </body>
 </html>

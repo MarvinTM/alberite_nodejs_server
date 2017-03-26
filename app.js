@@ -14,10 +14,10 @@ var config = {
 };
 
 var pool = new pg.Pool(config);
-function executeQuery(queryStr, success) {
+function executeQuery(queryStr, params, success) {
   pool.connect(function(err, client, done) {
     var results = [];
-    var query = client.query(queryStr);
+    var query = client.query(queryStr, params);
     query.on('row', function (row) {
       results.push(row);
     });
@@ -31,7 +31,7 @@ function executeQuery(queryStr, success) {
 function writeLogInfo(logInfo, callback) {
   var queryStr = "INSERT INTO LOGINFO VALUES ('";
   queryStr += uuidV4()+"','"+logInfo.message+"','"+logInfo.messagedate+"','"+logInfo.type+"', '"+logInfo.externalip+"')";
-  executeQuery(queryStr, function(results) {
+  executeQuery(queryStr, null, function(results) {
     callback();
   });
 
@@ -43,9 +43,14 @@ function writeLogInfo(logInfo, callback) {
 
 function deleteSystemActions(callback) {
   var queryStr = "DELETE FROM SYSTEM";
-  executeQuery(queryStr, function(results) {
+  executeQuery(queryStr, null, function(results) {
     callback();
   });
+};
+
+function initiateSystemAction(pin, duration, callback) {
+  var insertStr = "INSERT INTO SYSTEM VALUES ($1, $2)";
+  executeQuery(insertStr, [pin, duration], callback); 
 };
 
 var express = require('express');
@@ -61,7 +66,7 @@ app.use(bodyParser.json());
 
 app.get('/loginfo', function (req, res) {
   var queryStr = 'SELECT id, message, messagedate, type, externalip FROM loginfo ORDER BY messagedate DESC LIMIT 20';
-  executeQuery(queryStr, function(results) {
+  executeQuery(queryStr, null, function(results) {
     res.json(results);
   });
 })
@@ -71,7 +76,7 @@ app.post('/ping', function (req, res) {
 console.log(JSON.stringify(bodyObj));
   writeLogInfo(bodyObj, function(results) {
     var querySystem = "SELECT * FROM SYSTEM";
-    executeQuery(querySystem, function(results) {
+    executeQuery(querySystem, null, function(results) {
       var response;
       if(results.length!=0) {
         response = {message: 'System active', opCode: 1, systemInfo: results};
@@ -108,6 +113,15 @@ app.post('/systemHasFinished',  function (req, res) {
   writeLogInfo(bodyObj, function(results) {
     var response = {message: 'Everything is ok', opCode: 0};
     res.json(response);
+  });
+});
+
+app.get('/startSystemAction', function (req, res) {
+  var pin = req.query.pin;
+  var duration = req.query.duration;
+  console.log('Initiating action with pin: '+pin);
+  initiateSystemAction(pin, duration, function(results) {
+    res.json({message: 'Everything is ok', opCode: 0});
   });
 });
 
