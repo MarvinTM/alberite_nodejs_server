@@ -54,7 +54,7 @@ function doRequestForSystemAction(actionId) {
     }
   };
 
-  xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration=5&", true);
+  xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration=300&", true);
   xmlhttp.send();
 }
 
@@ -90,6 +90,12 @@ element('poolPhase2').style.cursor = 'pointer';
 element('mainPhase1').style.cursor = 'pointer';
 element('backyard').style.cursor = 'pointer';
 element('orchard').style.cursor = 'pointer';
+element('poolPhase1').style.color = 'blue';
+element('poolPhase2').style.color = 'blue';
+element('mainPhase1').style.color = 'blue';
+element('backyard').style.color = 'blue';
+element('orchard').style.color = 'blue';
+
 
 element('poolPhase1').onclick = function() {
   doRequestForSystemAction(1);
