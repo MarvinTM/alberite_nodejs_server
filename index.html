@@ -58,30 +58,47 @@ function doRequestForSystemAction(actionId) {
   xmlhttp.send();
 }
 
+function doRegisterUser() {
+  document.location = "/registerUser";
+};
+
+
+function doLogout() {
+  document.location = "/logout";
+};
+
+
+
 </script>
 <div id="mainContainer">
-<div id="leftContainer" style="width:48%;float:left;padding:5px">
-<div style="border-width: 1px;border-style: solid;padding:10px;">
-<div>ESTADO</div>
-<div id="statusContainer">OK</div>
-</div>
-<div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
-<div>OPCIONES</div>
-<div id="optionsContainer">
-<div id="poolPhase1">Regar Piscina fase 1</div>
-<div id="poolPhase2">Regar Piscina fase 2</div>
-<div id="mainPhase1">Regar Aspersores fase 1</div>
-<div id="backyard">Regar Zona cerezo</div>
-<div id="orchard">Regar Huerta</div>
-</div>
-</div>
-</div>
-<div id="rightContainer" style="width:48%;float:left;padding:5px;">
-<div style="border-width: 1px;border-style: solid;padding:10px">
-<div>LOG</div>
-<div id="logContainer">el log</div>
-</div>
-</div>
+  <div id="leftContainer" style="width:48%;float:left;padding:5px">
+    <div style="border-width: 1px;border-style: solid;padding:10px;">
+      <div>ESTADO</div>
+      <div id="statusContainer">OK</div>
+    </div>
+    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+      <div>RIEGO</div>
+      <div id="riegoContainer">
+        <div id="poolPhase1">Regar Piscina fase 1</div>
+        <div id="poolPhase2">Regar Piscina fase 2</div>
+        <div id="mainPhase1">Regar Aspersores fase 1</div>
+        <div id="backyard">Regar Zona cerezo</div>
+        <div id="orchard">Regar Huerta</div>
+      </div>
+    </div>
+    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+      <div>OPCIONES</div>
+      <div id="optionsContainer">
+        <div id="logout">Salir</div>
+      </div>
+    </div>
+  </div>
+  <div id="rightContainer" style="width:48%;float:left;padding:5px;">
+    <div style="border-width: 1px;border-style: solid;padding:10px">
+      <div>LOG</div>
+      <div id="logContainer">el log</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -90,12 +107,13 @@ element('poolPhase2').style.cursor = 'pointer';
 element('mainPhase1').style.cursor = 'pointer';
 element('backyard').style.cursor = 'pointer';
 element('orchard').style.cursor = 'pointer';
+element('logout').style.cursor = 'pointer';
 element('poolPhase1').style.color = 'blue';
 element('poolPhase2').style.color = 'blue';
 element('mainPhase1').style.color = 'blue';
 element('backyard').style.color = 'blue';
 element('orchard').style.color = 'blue';
-
+element('logout').style.color = 'blue';
 
 element('poolPhase1').onclick = function() {
   doRequestForSystemAction(1);
@@ -117,6 +135,9 @@ element('orchard').onclick = function() {
   doRequestForSystemAction(5);
 };
 
+element('logout').onclick = function() {
+  doLogout();
+};
 
 
 </script>
