@@ -14,7 +14,7 @@ var config = {
 };
 
 var pool = new pg.Pool(config);
-function executeQuery(queryStr, params, success) {
+function executeQuery(queryStr, params, success, errorFunc) {
   pool.connect(function(err, client, done) {
     var results = [];
     var query = client.query(queryStr, params);
@@ -24,6 +24,12 @@ function executeQuery(queryStr, params, success) {
     query.on('end', function() {
       done();
       success(results);
+    });
+    query.on('error', function(error) {
+      console.error('Boom: '+error);
+      if(errorFunc) {
+        errorFunc(error);
+      }
     });
   });
 }
@@ -82,9 +88,9 @@ function deleteProgrammedAction(programmedAction, callback) {
   });
 };
 
-function insertProgrammedAction(phase, time, frequency, hour, callback) {
+function insertProgrammedAction(phase, time, frequency, hour, callback, errorCallback) {
   var insertStr = "INSERT INTO PROGRAMMED_ACTIONS SELECT $1, $2, coalesce(max(index), 0)+1, $3, $4 FROM PROGRAMMED_ACTIONS";
-  executeQuery(insertStr, [phase, time, frequency, hour], callback);
+  executeQuery(insertStr, [phase, time, frequency, hour], callback, errorCallback);
 };
 
 
@@ -246,6 +252,9 @@ app.get('/insertProgrammedAction', ensureAuthenticated, function (req, res) {
   var programmedAction = req.query;
   insertProgrammedAction(programmedAction.phase, programmedAction.time, programmedAction.frequency, programmedAction.hour, function() {
     var response = {message: 'Everything is ok', opCode: 0};
+    res.json(response);
+  }, function(error){
+    var response = {message: 'Error al crear acción programada: '+error, opCode: 1};
     res.json(response);
   });
 });

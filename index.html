@@ -9,7 +9,12 @@ function doRemoteRequest(endPoint, callback) {
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
       if (xmlhttp.status == 200) {
-        callback(JSON.parse(xmlhttp.responseText));
+        var response = JSON.parse(xmlhttp.responseText);
+        if(response && response.opCode && response.opCode!==0){
+          alert("ERROR: "+response.message);
+        } else {
+          callback(JSON.parse(xmlhttp.responseText));
+        }
       } else if (xmlhttp.status == 400) {
         console.error('There was an error 400');
       } else {
@@ -123,7 +128,7 @@ function element(id) {
   return document.getElementById(id);
 };
 
-function doRequestForSystemAction(actionId) {
+function doRequestForSystemAction(actionId, duration) {
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
@@ -137,8 +142,16 @@ function doRequestForSystemAction(actionId) {
     }
   };
 
-  xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration=5&", true);
+  xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration="+(duration?duration:5)+"&", true);
   xmlhttp.send();
+};
+
+function doRequestForSystemActionFromInput() {
+  var phase = document.getElementById("action_phase").value;
+  var time = document.getElementById("action_duration").value;
+  doRemoteRequest("/startSystemAction?pin="+phase+"&duration="+time+"&", function(actionsInfo) {
+    alert('Riego iniciado');
+  });
 };
 
 function doRequestForCancelProgrammedAction(actionId) {
@@ -211,6 +224,28 @@ function doLogout() {
     </div>
     <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
       <div>RIEGO</div>
+      <div id="newAction"</div>
+        <select id='action_phase' style='width:15%'>
+          <option value=1>Piscina fase 1</option>
+          <option value=2>Piscina fase 2</option>
+          <option value=3>Aspersores fase 1</option>
+          <option value=4>Entrada+Cerezo</option>
+        </select>
+
+        <select id='action_duration' style='width:20%'>
+          <option value=10>Pulso (10 segundos)</option>
+          <option value=30>30 segundos</option>
+          <option value=60>1 minuto</option>
+          <option value=120>2 minutos</option>
+          <option value=180>3 minutos</option>
+          <option value=240>4 minutos</option>
+          <option value=300>5 minutos</option>
+        </select>
+
+        <img id='action_create' src='save.png' width='20' />
+      </div>
+
+<!--
       <div id="riegoContainer">
         <div id="poolPhase1">Regar Piscina fase 1</div>
         <div id="poolPhase2">Regar Piscina fase 2</div>
@@ -218,6 +253,7 @@ function doLogout() {
         <div id="backyard">Regar Zona cerezo</div>
         <div id="orchard">Regar Huerta</div>
       </div>
+--!>
     </div>
     <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
       <div>OPCIONES</div>
@@ -239,6 +275,10 @@ function doLogout() {
 </div>
 
 <script>
+element('logout').style.cursor = 'pointer';
+element('logout').style.color = 'blue';
+
+/*
 element('poolPhase1').style.cursor = 'pointer';
 element('poolPhase2').style.cursor = 'pointer';
 element('mainPhase1').style.cursor = 'pointer';
@@ -272,7 +312,7 @@ element('backyard').onclick = function() {
 element('orchard').onclick = function() {
   doRequestForSystemAction(5);
 };
-
+*/
 element('logout').onclick = function() {
   doLogout();
 };
@@ -280,6 +320,11 @@ element('logout').onclick = function() {
 element('program_create').onclick = function() {
   doRequestForProgramInsertion();
 };
+
+element('action_create').onclick = function() {
+  doRequestForSystemActionFromInput();
+};
+
 
 </script>
 </body>
