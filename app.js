@@ -41,10 +41,21 @@ function writeLogInfo(logInfo, callback) {
 
 //SYSTEM ACTIONS
 
-function deleteSystemActions(callback) {
-  var queryStr = "DELETE FROM ACTIONS WHERE INDEX=(SELECT MIN(INDEX) FROM ACTIONS)";
+function moveActionToArchive(callback) {
+  var queryStr = "SELECT * FROM ACTIONS ORDER BY INDEX LIMIT 1";
   executeQuery(queryStr, null, function(results) {
-    callback();
+    var action = results[0];
+    var queryDelete = "DELETE FROM ACTIONS WHERE INDEX=$1";
+    executeQuery(queryDelete, [action.index], function(results) {
+      console.log('Archiving action');
+      var queryInsertArchive = "INSERT INTO PAST_ACTIONS SELECT COALESCE(MAX(INDEX), 0)+1, $1, $2, $3, $4, $5 FROM PAST_ACTIONS";
+      console.log('Action archived');
+      var now = new Date();
+      now.setHours(now.getHours()+2); //adjust for GMT+2
+      executeQuery(queryInsertArchive, [action.phase, action.time, now, action.index, action.programmed_action], function() {
+        callback();
+      });
+    });
   });
 };
 
@@ -203,6 +214,13 @@ app.get('/actionsInfo', ensureAuthenticated, function (req, res) {
   });
 });
 
+app.get('/pastActionsInfo', ensureAuthenticated, function (req, res) {
+  var querySystem = "SELECT * FROM PAST_ACTIONS ORDER BY INDEX DESC LIMIT 15";
+  executeQuery(querySystem, null, function(results) {
+    res.json(results);
+  });
+});
+
 app.get('/programmedActionsInfo', ensureAuthenticated, function (req, res) {
   var querySystem = "SELECT * FROM PROGRAMMED_ACTIONS ORDER BY INDEX ASC";
   executeQuery(querySystem, null, function(results) {
@@ -232,7 +250,7 @@ app.post('/systemInitiating', function (req, res) {
   var bodyObj = req.body;
   writeLogInfo(bodyObj, function(results) {
     //Delete system action from table
-    deleteSystemActions(function() {
+    moveActionToArchive(function() {
       response = {message: 'Everything is ok', opCode: 0};
       res.json(response);
     });

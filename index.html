@@ -78,6 +78,31 @@ setInterval(function() {
 
   });
 
+  doRemoteRequest('pastActionsInfo', function(actionsInfo) {
+    if(actionsInfo.length===0) {
+      document.getElementById("pastActionsContainer").innerHTML = '<b>Nada</b>'; 
+      return;
+    }
+    var logTable = "<table style='width:100%'><tr'><th style='width:10%'>FASE</th><th style='width:10%'>DURACIÓN (segundos)</th><th style='width:50%'>FECHA</th><th style='width:10%'>HORA</th></tr>";
+    actionsInfo.forEach(function(logrow) {
+      var bgColor;
+      bgColor = '#00ffff';
+      var theDate = new Date(logrow.date);
+      theDate.setHours(theDate.getHours()-2);
+      var date = theDate.toLocaleDateString();
+      var time = theDate.toLocaleTimeString();
+      time=time.substring(0, time.length-4);
+      logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.phase+"</td><td>"+logrow.duration+"</td>";
+      logTable+="<td>"+(date)+"</td>";
+      logTable+="<td>"+(time)+"</td>";
+    });        
+    document.getElementById("pastActionsContainer").innerHTML = logTable; 
+
+  });
+
+
+
+
 }, 1000);
 
 function element(id) {
@@ -98,7 +123,7 @@ function doRequestForSystemAction(actionId) {
     }
   };
 
-  xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration=10&", true);
+  xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration=5&", true);
   xmlhttp.send();
 }
 
@@ -146,9 +171,13 @@ function navigateProgram() {
     </div>
   </div>
   <div id="rightContainer" style="width:48%;float:left;padding:5px;">
-    <div style="border-width: 1px;border-style: solid;padding:10px">
-      <div>LOG</div>
-      <div id="logContainer">el log</div>
+    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+      <div>LOG ACTUAL RASPBERRY-PI</div>
+      <div id="logContainer"></div>
+    </div>
+    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+      <div>ÚLTIMOS RIEGOS</div>
+      <div id="pastActionsContainer"></div>
     </div>
   </div>
 </div>
