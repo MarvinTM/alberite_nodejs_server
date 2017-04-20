@@ -3,26 +3,13 @@
 </head>
 <body>
 <script>
-setInterval(function() {
+
+function doRemoteRequest(endPoint, callback) {
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
       if (xmlhttp.status == 200) {
-	var logTable = "<table style='width:100%'><tr'><th style='width:40%'>MENSAJE</th><th style='width:50%'>FECHA</th><th>IP</th></tr>";
-        var logInfo = JSON.parse(xmlhttp.responseText);
-        logInfo.forEach(function(logrow) {
-          var bgColor;
-          if(logrow.type==='INFO'){
-            bgColor = '#00ff00';
-          } else if (logrow.type==='ACTION') {
-            bgColor = '#00ffff';
-          } else {
-            bgColor = '#ff0000';
-          }
-          logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.message+"</td><td>"+new Date(logrow.messagedate).toLocaleString()+"</td><td>"+logrow.externalip+"</td>";
-        });        
-console.log(logTable);
-       document.getElementById("logContainer").innerHTML = logTable; 
+        callback(JSON.parse(xmlhttp.responseText));
       } else if (xmlhttp.status == 400) {
         console.error('There was an error 400');
       } else {
@@ -31,8 +18,65 @@ console.log(logTable);
     }
   };
 
-  xmlhttp.open("GET", "logInfo", true);
+  xmlhttp.open("GET", endPoint, true);
   xmlhttp.send();
+};
+
+setInterval(function() {
+  doRemoteRequest('loginfo', function(logInfo) {
+    if(logInfo.length===0) {
+      document.getElementById("logContainer").innerHTML = 'Nada'; 
+      return;
+    }
+    var logTable = "<table style='width:100%'><tr'><th style='width:40%'>MENSAJE</th><th style='width:50%'>FECHA</th><th>IP</th></tr>";
+    logInfo.forEach(function(logrow) {
+      var bgColor;
+      if(logrow.type==='INFO'){
+        bgColor = '#00ff00';
+      } else if (logrow.type==='ACTION') {
+        bgColor = '#00ffff';
+      } else {
+        bgColor = '#ff0000';
+      }
+      logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.message+"</td><td>"+new Date(logrow.messagedate).toLocaleString()+"</td><td>"+logrow.externalip+"</td>";
+    });        
+    document.getElementById("logContainer").innerHTML = logTable; 
+  });
+
+  doRemoteRequest('actionsInfo', function(actionsInfo) {
+    if(actionsInfo.length===0) {
+      document.getElementById("actionsContainer").innerHTML = '<b>Nada</b>'; 
+      return;
+    }
+    var logTable = "<table style='width:100%'><tr'><th style='width:40%'>FASE</th><th style='width:50%'>DURACIÓN (segundos)</th></tr>";
+    actionsInfo.forEach(function(logrow) {
+      var bgColor;
+      if(logrow.programmed_action!==null) {
+        bgColor = '#ffff00';
+      } else {
+        bgColor = '#00ffff';
+      }
+      logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.phase+"</td><td>"+logrow.time+"</td>";
+    });        
+    document.getElementById("actionsContainer").innerHTML = logTable; 
+
+  });
+
+  doRemoteRequest('programmedActionsInfo', function(actionsInfo) {
+    if(actionsInfo.length===0) {
+      document.getElementById("programmedActionsContainer").innerHTML = '<b>Nada</b>'; 
+      return;
+    }
+    var logTable = "<table style='width:100%'><tr'><th style='width:10%'>FASE</th><th style='width:10%'>DURACIÓN (segundos)</th><th style='width:50%'>FRECUENCIA</th><th style='width:10%'>HORA</th></tr>";
+    actionsInfo.forEach(function(logrow) {
+      var bgColor;
+      bgColor = '#ffff00';
+      logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.phase+"</td><td>"+logrow.time+"</td>";
+      logTable+="<td>"+logrow.frequency+"</td><td>"+logrow.hour+"</td>";
+    });        
+    document.getElementById("programmedActionsContainer").innerHTML = logTable; 
+
+  });
 
 }, 1000);
 
@@ -54,7 +98,7 @@ function doRequestForSystemAction(actionId) {
     }
   };
 
-  xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration=300&", true);
+  xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration=10&", true);
   xmlhttp.send();
 }
 
@@ -67,14 +111,21 @@ function doLogout() {
   document.location = "/logout";
 };
 
+function navigateProgram() {
+  document.location = "/program";
+};
 
 
 </script>
 <div id="mainContainer">
   <div id="leftContainer" style="width:48%;float:left;padding:5px">
-    <div style="border-width: 1px;border-style: solid;padding:10px;">
-      <div>ESTADO</div>
-      <div id="statusContainer">OK</div>
+    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+      <div>RIEGOS ACTUALES EN COLA</div>
+      <div id="actionsContainer"></div>
+    </div>
+    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+      <div>RIEGOS PROGRAMADOS</div>
+      <div id="programmedActionsContainer"></div>
     </div>
     <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
       <div>RIEGO</div>
@@ -89,6 +140,7 @@ function doLogout() {
     <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
       <div>OPCIONES</div>
       <div id="optionsContainer">
+        <div id="program">Programar riego</div>
         <div id="logout">Salir</div>
       </div>
     </div>
@@ -108,12 +160,15 @@ element('mainPhase1').style.cursor = 'pointer';
 element('backyard').style.cursor = 'pointer';
 element('orchard').style.cursor = 'pointer';
 element('logout').style.cursor = 'pointer';
+element('program').style.cursor = 'pointer';
 element('poolPhase1').style.color = 'blue';
 element('poolPhase2').style.color = 'blue';
 element('mainPhase1').style.color = 'blue';
 element('backyard').style.color = 'blue';
 element('orchard').style.color = 'blue';
 element('logout').style.color = 'blue';
+element('program').style.color = 'blue';
+
 
 element('poolPhase1').onclick = function() {
   doRequestForSystemAction(1);
@@ -139,6 +194,9 @@ element('logout').onclick = function() {
   doLogout();
 };
 
+element('program').onclick = function() {
+  navigateProgram();
+};
 
 </script>
 </body>

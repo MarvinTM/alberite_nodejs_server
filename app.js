@@ -42,16 +42,34 @@ function writeLogInfo(logInfo, callback) {
 //SYSTEM ACTIONS
 
 function deleteSystemActions(callback) {
-  var queryStr = "DELETE FROM SYSTEM";
+  var queryStr = "DELETE FROM ACTIONS WHERE INDEX=(SELECT MIN(INDEX) FROM ACTIONS)";
   executeQuery(queryStr, null, function(results) {
     callback();
   });
 };
 
-function initiateSystemAction(pin, duration, callback) {
-  var insertStr = "INSERT INTO SYSTEM VALUES ($1, $2)";
-  executeQuery(insertStr, [pin, duration], callback); 
+function getMaxSystemAction(callback) {
+  var queryStr = "SELECT COALESCE(MAX(index), 0)::integer as maxindex FROM ACTIONS";
+  executeQuery(queryStr, null, function(results) {
+    callback(results);
+  });
 };
+
+function initiateSystemAction(pin, duration, callback, programmedAction) {
+  getMaxSystemAction(function(maxIndex) {
+    console.log(maxIndex);
+    var insertStr = "INSERT INTO ACTIONS VALUES ($1, $2, $3, $4)";
+    executeQuery(insertStr, [pin, duration, maxIndex[0].maxindex+1, programmedAction], callback); 
+  });
+};
+
+function deleteProgrammedAction(programmedAction, callback) {
+  var queryStr = "DELETE FROM PROGRAMMED_ACTIONS WHERE INDEX=$1";
+  executeQuery(queryStr, [programmedAction.index], function(results) {
+    callback();
+  });
+};
+
 
 
 //EXPRESS INITIALIZATION
@@ -176,13 +194,28 @@ app.get('/loginfo', ensureAuthenticated, function (req, res) {
   executeQuery(queryStr, null, function(results) {
     res.json(results);
   });
-})
+});
 
+app.get('/actionsInfo', ensureAuthenticated, function (req, res) {
+  var querySystem = "SELECT * FROM ACTIONS ORDER BY INDEX ASC";
+  executeQuery(querySystem, null, function(results) {
+    res.json(results); 
+  });
+});
+
+app.get('/programmedActionsInfo', ensureAuthenticated, function (req, res) {
+  var querySystem = "SELECT * FROM PROGRAMMED_ACTIONS ORDER BY INDEX ASC";
+  executeQuery(querySystem, null, function(results) {
+    res.json(results);
+  });
+});
+
+  
 app.post('/ping', function (req, res) {
   var bodyObj = req.body;
   console.log(JSON.stringify(bodyObj));
   writeLogInfo(bodyObj, function(results) {
-    var querySystem = "SELECT * FROM SYSTEM";
+    var querySystem = "SELECT * FROM ACTIONS";
     executeQuery(querySystem, null, function(results) {
       var response;
       if(results.length!=0) {
@@ -251,7 +284,84 @@ app.get('/main', ensureAuthenticated, function(req, res) {
   });
 });
 
+app.get('/program', ensureAuthenticated, function(req, res) {
+  fs.readFile('program.html', 'utf8', function(err, data) {
+    res.send(data);
+  });
+});
 
+// PROGRAMED ACTIONS INTERVAL
+
+function isOddDay() {
+  return new Date().getDay()%2===1;
+}
+
+function actionShouldBeTriggered(programmedAction) {
+  if(programmedAction.frequency==='Días Pares' && isOddDay()) {
+   return false;
+  } else if (programmedAction.frequency==='Días Impares' && !isOddDay()) {
+   return false;
+  }
+  var now = new Date();
+  var hour = now.getHours()+2; //Adjust for GMT+2
+  var minutes = now.getMinutes();
+  var splittedHour = programmedAction.hour.split(':');
+  console.log(splittedHour);
+  console.log(hour);
+  console.log(minutes);
+  if(hour == splittedHour[0] && minutes == splittedHour[1]) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function findExistingProgrammedAction(programmedAction, callback) {
+  var querySystem = "SELECT * FROM ACTIONS WHERE PROGRAMMED_ACTION=$1";
+  executeQuery(querySystem, [programmedAction.index], callback);
+}
+
+function processProgrammedAction(programmedActions, index, finishCallback) {
+  if(index===programmedActions.length) {
+    finishCallback();
+    return;
+  }
+  var programmedAction = programmedActions[index];
+  if(actionShouldBeTriggered(programmedAction)) {
+    console.log(programmedAction);
+    findExistingProgrammedAction(programmedAction, function(results) {
+      if(results.length===0) {
+        initiateSystemAction(programmedAction.phase, programmedAction.time, function() {
+          console.log('Programmed action triggered an action. Phase: '+programmedAction.phase);
+          processProgrammedAction(programmedActions, index+1, finishCallback);
+        }, programmedAction.index);
+      } else {
+        console.log('Action alredy exists. Phase: '+programmedAction.phase);
+        processProgrammedAction(programmedActions, index+1, finishCallback);
+      }
+    });
+  } else {
+    processProgrammedAction(programmedActions, index+1, finishCallback);
+  }
+}
+
+function programmedActionsProcessor() {
+  console.log('Initiating processing of programmed actions at: '+(new Date()));
+  var queryProgrammedActions = "SELECT * FROM PROGRAMMED_ACTIONS ORDER BY INDEX ASC";
+  executeQuery(queryProgrammedActions, null, function(programmedActions) {
+    processProgrammedAction(programmedActions, 0, function() {
+      console.log('Finished processing programmed actions');
+    });
+  });  
+};
+
+setInterval(function() {
+  programmedActionsProcessor();
+}, 30000);
+programmedActionsProcessor();
+
+
+// SERVER START
 app.listen(port, function () {
   console.log('Alberite starting!! Listening on port '+port+'!')
 })
