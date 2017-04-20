@@ -271,11 +271,8 @@ app.post('/ping', function (req, res) {
 app.post('/systemInitiating', function (req, res) {
   var bodyObj = req.body;
   writeLogInfo(bodyObj, function(results) {
-    //Delete system action from table
-    moveActionToArchive(function() {
-      response = {message: 'Everything is ok', opCode: 0};
-      res.json(response);
-    });
+    response = {message: 'Everything is ok', opCode: 0};
+    res.json(response);
   });
 });
 
@@ -291,8 +288,11 @@ app.post('/systemHasStarted', function (req, res) {
 app.post('/systemHasFinished', function (req, res) {
   var bodyObj = req.body;
   writeLogInfo(bodyObj, function(results) {
-    var response = {message: 'Everything is ok', opCode: 0};
-    res.json(response);
+    //Delete system action from table
+    moveActionToArchive(function() {
+      var response = {message: 'Everything is ok', opCode: 0};
+      res.json(response);
+    });
   });
 });
 
