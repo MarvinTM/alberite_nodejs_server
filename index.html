@@ -96,7 +96,11 @@ setInterval(function() {
     var logTable = "<table style='width:100%'><tr'><th style='width:10%'>FASE</th><th style='width:10%'>DURACIÓN (segundos)</th><th style='width:50%'>FECHA</th><th style='width:10%'>HORA</th></tr>";
     actionsInfo.forEach(function(logrow) {
       var bgColor;
-      bgColor = '#00ffff';
+      if(logrow.programmed_action) {
+        bgColor = '#ffff00';
+      } else {
+        bgColor = '#00ffff';
+      }
       var theDate = new Date(logrow.date);
       theDate.setHours(theDate.getHours()-2);
       var date = theDate.toLocaleDateString();
@@ -184,6 +188,7 @@ function doLogout() {
       
         <select id='program_duration' style='width:20%'>
           <option value=10>Pulso (10 segundos)</option>
+          <option value=30>30 segundos</option>
           <option value=60>1 minuto</option>
           <option value=120>2 minutos</option>
           <option value=180>3 minutos</option>
