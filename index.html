@@ -80,7 +80,7 @@ setInterval(function() {
       var bgColor;
       bgColor = '#ffff00';
       logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.phase+"</td><td>"+logrow.time+"</td>";
-      logTable+="<td>"+logrow.frequency+"</td><td>"+logrow.hour+"</td><td><img id='program_cancel_"+logrow.index+"' src='cancel.png' height='20'/></td>";
+      logTable+="<td>"+logrow.frequency+"</td><td>"+logrow.hour+"</td><td><img id='program_cancel_"+logrow.index+"' src='cancel.png' height='20' style='vertical-align: middle;' /></td>";
     });
     
     document.getElementById("programmedActionsContainer").innerHTML = logTable;
@@ -219,7 +219,7 @@ function doLogout() {
           <input id='program_hour' style='width:20px'/>:<input id='program_minute' style='width:20px'/>:<input id='program_second' style='width:20px'/>
         </div>
 
-        <img id='program_create' src='save.png' width='20' />
+        <img id='program_create' src='save.png' width='20' style='vertical-align: middle;' />
       </div>
     </div>
     <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
@@ -242,7 +242,7 @@ function doLogout() {
           <option value=300>5 minutos</option>
         </select>
 
-        <img id='action_create' src='save.png' width='20' />
+        <img id='action_create' src='ok.png' width='20'  style='vertical-align: middle;'/>
       </div>
 
 <!--
