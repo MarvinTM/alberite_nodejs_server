@@ -63,18 +63,28 @@ setInterval(function() {
   });
 
   doRemoteRequest('programmedActionsInfo', function(actionsInfo) {
-    if(actionsInfo.length===0) {
-      document.getElementById("programmedActionsContainer").innerHTML = '<b>Nada</b>'; 
+    var jsonProgActions = JSON.stringify(actionsInfo);
+    if(window.GLOBAL_PROGRAMMEDACTIONSINFO && jsonProgActions===window.GLOBAL_PROGRAMMEDACTIONSINFO) {
+      //Programmed actions didn't change. No need to rebuild table;
       return;
     }
-    var logTable = "<table style='width:100%'><tr'><th style='width:10%'>FASE</th><th style='width:10%'>DURACIÓN (segundos)</th><th style='width:50%'>FRECUENCIA</th><th style='width:10%'>HORA</th></tr>";
+    window.GLOBAL_PROGRAMMEDACTIONSINFO=jsonProgActions;
+    
+    var logTable = "<table style='width:100%'><tr'><th style='width:15%'>FASE</th><th style='width:20%'>DURACIÓN (segundos)</th><th style='width:45%'>FRECUENCIA</th><th style='width:15%'>HORA</th><th style='width:5%'></th></tr>";
     actionsInfo.forEach(function(logrow) {
       var bgColor;
       bgColor = '#ffff00';
       logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.phase+"</td><td>"+logrow.time+"</td>";
-      logTable+="<td>"+logrow.frequency+"</td><td>"+logrow.hour+"</td>";
-    });        
-    document.getElementById("programmedActionsContainer").innerHTML = logTable; 
+      logTable+="<td>"+logrow.frequency+"</td><td>"+logrow.hour+"</td><td><img id='program_cancel_"+logrow.index+"' src='cancel.png' height='20'/></td>";
+    });
+    
+    document.getElementById("programmedActionsContainer").innerHTML = logTable;
+
+    actionsInfo.forEach(function(logrow) {
+      document.getElementById("program_cancel_"+logrow.index).onclick = function() {
+        doRequestForCancelProgrammedAction(logrow.index);
+      };
+    }); 
 
   });
 
@@ -125,7 +135,24 @@ function doRequestForSystemAction(actionId) {
 
   xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration=5&", true);
   xmlhttp.send();
-}
+};
+
+function doRequestForCancelProgrammedAction(actionId) {
+  doRemoteRequest("/cancelProgrammedAction?programmedAction="+actionId, function(actionsInfo) {
+    alert('Programación eliminada');
+  });
+};
+
+function doRequestForProgramInsertion() {
+  var phase = document.getElementById("program_phase").value;
+  var time = document.getElementById("program_duration").value;
+  var frequency = document.getElementById("program_frequency").value;
+  var hour = document.getElementById("program_hour").value+":"+document.getElementById("program_minute").value+":"+document.getElementById("program_second").value;
+  doRemoteRequest("/insertProgrammedAction?phase="+phase+"&time="+time+"&frequency="+frequency+"+&hour='"+hour+"'", function(actionsInfo) {
+    alert('Riego programado');
+  });
+};
+
 
 function doRegisterUser() {
   document.location = "/registerUser";
@@ -134,10 +161,6 @@ function doRegisterUser() {
 
 function doLogout() {
   document.location = "/logout";
-};
-
-function navigateProgram() {
-  document.location = "/program";
 };
 
 
@@ -151,6 +174,35 @@ function navigateProgram() {
     <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
       <div>RIEGOS PROGRAMADOS</div>
       <div id="programmedActionsContainer"></div>
+      <div id="newProgrammedAction"</div>
+        <select id='program_phase' style='width:15%'>
+          <option value=1>Piscina fase 1</option>        
+          <option value=2>Piscina fase 2</option>
+          <option value=3>Aspersores fase 1</option>
+          <option value=4>Entrada+Cerezo</option>
+        </select>
+      
+        <select id='program_duration' style='width:20%'>
+          <option value=10>Pulso (10 segundos)</option>
+          <option value=60>1 minuto</option>
+          <option value=120>2 minutos</option>
+          <option value=180>3 minutos</option>
+          <option value=240>4 minutos</option>
+          <option value=300>5 minutos</option>
+        </select>
+
+        <select id='program_frequency' style='width:45%'>
+          <option value='DIARIA'>DIARIA</option>
+          <option value='DÍAS IMPARES'>DÍAS IMPARES</option>
+          <option value='DÍAS PARES'>DÍAS PARES</option>
+        </select>
+        
+        <div style='width:15%; display:inline;'>  
+          <input id='program_hour' style='width:20px'/>:<input id='program_minute' style='width:20px'/>:<input id='program_second' style='width:20px'/>
+        </div>
+
+        <img id='program_create' src='save.png' width='20' />
+      </div>
     </div>
     <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
       <div>RIEGO</div>
@@ -165,7 +217,6 @@ function navigateProgram() {
     <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
       <div>OPCIONES</div>
       <div id="optionsContainer">
-        <div id="program">Programar riego</div>
         <div id="logout">Salir</div>
       </div>
     </div>
@@ -189,14 +240,12 @@ element('mainPhase1').style.cursor = 'pointer';
 element('backyard').style.cursor = 'pointer';
 element('orchard').style.cursor = 'pointer';
 element('logout').style.cursor = 'pointer';
-element('program').style.cursor = 'pointer';
 element('poolPhase1').style.color = 'blue';
 element('poolPhase2').style.color = 'blue';
 element('mainPhase1').style.color = 'blue';
 element('backyard').style.color = 'blue';
 element('orchard').style.color = 'blue';
 element('logout').style.color = 'blue';
-element('program').style.color = 'blue';
 
 
 element('poolPhase1').onclick = function() {
@@ -223,8 +272,8 @@ element('logout').onclick = function() {
   doLogout();
 };
 
-element('program').onclick = function() {
-  navigateProgram();
+element('program_create').onclick = function() {
+  doRequestForProgramInsertion();
 };
 
 </script>

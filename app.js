@@ -75,10 +75,16 @@ function initiateSystemAction(pin, duration, callback, programmedAction) {
 };
 
 function deleteProgrammedAction(programmedAction, callback) {
+  console.log('Deleting programmed action: '+programmedAction);
   var queryStr = "DELETE FROM PROGRAMMED_ACTIONS WHERE INDEX=$1";
-  executeQuery(queryStr, [programmedAction.index], function(results) {
+  executeQuery(queryStr, [programmedAction], function(results) {
     callback();
   });
+};
+
+function insertProgrammedAction(phase, time, frequency, hour, callback) {
+  var insertStr = "INSERT INTO PROGRAMMED_ACTIONS SELECT $1, $2, coalesce(max(index), 0)+1, $3, $4 FROM PROGRAMMED_ACTIONS";
+  executeQuery(insertStr, [phase, time, frequency, hour], callback);
 };
 
 
@@ -95,6 +101,7 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 app.use(bodyParser.json());
+app.use(express.static('img'))
 
 
 //AUTHENTICATION INITIALIZATION
@@ -225,6 +232,21 @@ app.get('/programmedActionsInfo', ensureAuthenticated, function (req, res) {
   var querySystem = "SELECT * FROM PROGRAMMED_ACTIONS ORDER BY INDEX ASC";
   executeQuery(querySystem, null, function(results) {
     res.json(results);
+  });
+});
+
+app.get('/cancelProgrammedAction', ensureAuthenticated, function (req, res) {
+  deleteProgrammedAction(req.query.programmedAction, function() {
+    var response = {message: 'Everything is ok', opCode: 0};
+    res.json(response); 
+  });
+});
+
+app.get('/insertProgrammedAction', ensureAuthenticated, function (req, res) {
+  var programmedAction = req.query;
+  insertProgrammedAction(programmedAction.phase, programmedAction.time, programmedAction.frequency, programmedAction.hour, function() {
+    var response = {message: 'Everything is ok', opCode: 0};
+    res.json(response);
   });
 });
 
