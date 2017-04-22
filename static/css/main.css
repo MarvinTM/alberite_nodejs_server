@@ -1,0 +1,95 @@
+
+body{
+  font-family: Arial;
+  font-size: 14px;
+}
+
+.body{
+        position: absolute;
+        top: -20px;
+        left: -20px;
+        right: -40px;
+        bottom: -40px;
+        width: auto;
+        height: auto;
+        background-image: url(../img/casita1.jpg);
+        background-size: cover;
+        -webkit-filter: blur(5px);
+        z-index: 0;
+}
+
+.grad{
+        position: absolute;
+        top: -20px;
+        left: -20px;
+        right: -40px;
+        bottom: -40px;
+        width: auto;
+        height: auto;
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,0)), color-stop(100%,rgba(0,0,0,0.65))); /* Chrome,Safari4+ */
+        z-index: 1;
+        opacity: 0.7;
+}
+
+.mainContainer{
+        position: absolute;
+        top: 0px;// calc(50% - 75px);
+        left:0px; // calc(50% - 50px);
+//        height: 150px;
+//        width: 350px;
+//        padding: 10px;
+        z-index: 2;
+}
+
+table {
+  font-family: Arial;
+  font-size: 14px;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  display: table;
+}
+
+table th {
+//  background: #f6f6f6;
+  border-width: 0px;
+}
+table td {
+  display: table-cell;
+  border-width: 0px;
+}
+
+.current {
+  background: #e6f9ff;
+  margin-top:10px;
+  padding:10px;
+}
+
+.programmed {
+  background: #ffffe6;
+  margin-top:10px;
+  padding:10px;
+}
+
+.immediate {
+  background: #b3e6ff;
+  margin-top:10px;
+  padding:10px;
+}
+
+.options {
+  background: #ffe6ff;
+  margin-top:10px;
+  padding:10px;
+}
+
+.log {
+  background: #ccffcc;
+  margin-top:10px;
+  padding:10px;
+}
+
+.pastactions {
+  background: #ffffe6;
+  margin-top:10px;
+  padding:10px;
+}

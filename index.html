@@ -1,5 +1,7 @@
 <html>
 <head>
+<link rel="stylesheet prefetch" href="http://yui.yahooapis.com/pure/0.4.2/pure-min.css">
+  <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
 <script>
@@ -94,11 +96,17 @@ setInterval(function() {
   });
 
   doRemoteRequest('pastActionsInfo', function(actionsInfo) {
+    var jsonPastActions = JSON.stringify(actionsInfo);
+    if(window.GLOBAL_PASTACTIONSINFO && jsonPastActions===window.GLOBAL_PASTACTIONSINFO) {
+      //Past actions didn't change. No need to rebuild table;
+      return;
+    }
+    window.GLOBAL_PASTACTIONSINFO=jsonPastActions;
     if(actionsInfo.length===0) {
       document.getElementById("pastActionsContainer").innerHTML = '<b>Nada</b>'; 
       return;
     }
-    var logTable = "<table style='width:100%'><tr'><th style='width:10%'>FASE</th><th style='width:10%'>DURACIÓN (segundos)</th><th style='width:50%'>FECHA</th><th style='width:10%'>HORA</th></tr>";
+    var logTable = "<table ><thead><tr><th style='width:10%'>FASE</th><th style='width:10%'>DURACIÓN (segundos)</th><th style='width:50%'>FECHA</th><th style='width:10%'>HORA</th></tr></thead>";
     actionsInfo.forEach(function(logrow) {
       var bgColor;
       if(logrow.programmed_action) {
@@ -110,8 +118,8 @@ setInterval(function() {
       theDate.setHours(theDate.getHours()-2);
       var date = theDate.toLocaleDateString();
       var time = theDate.toLocaleTimeString();
-      time=time.substring(0, time.length-4);
-      logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.phase+"</td><td>"+logrow.duration+"</td>";
+      time=time.substring(0, time.length-4); //style='background-color:"+bgColor+";'
+      logTable+="<tr><td>"+logrow.phase+"</td><td>"+logrow.duration+"</td>";
       logTable+="<td>"+(date)+"</td>";
       logTable+="<td>"+(time)+"</td>";
     });        
@@ -182,13 +190,17 @@ function doLogout() {
 
 
 </script>
-<div id="mainContainer">
+  <div class="body"></div>
+  <div class="grad"></div>
+<br>
+
+<div id="mainContainer" class='mainContainer'>
   <div id="leftContainer" style="width:48%;float:left;padding:5px">
-    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+    <div class='current' >
       <div>RIEGOS ACTUALES EN COLA</div>
       <div id="actionsContainer"></div>
     </div>
-    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+    <div class='programmed'>
       <div>RIEGOS PROGRAMADOS</div>
       <div id="programmedActionsContainer"></div>
       <div id="newProgrammedAction"</div>
@@ -222,7 +234,7 @@ function doLogout() {
         <img id='program_create' src='img/save.png' width='20' style='vertical-align: middle;' />
       </div>
     </div>
-    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+    <div class='immediate'>
       <div>RIEGO</div>
       <div id="newAction"</div>
         <select id='action_phase' style='width:15%'>
@@ -255,7 +267,7 @@ function doLogout() {
       </div>
 --!>
     </div>
-    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+    <div class='options'>
       <div>OPCIONES</div>
       <div id="optionsContainer">
         <div id="logout">Salir</div>
@@ -263,11 +275,11 @@ function doLogout() {
     </div>
   </div>
   <div id="rightContainer" style="width:48%;float:left;padding:5px;">
-    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+    <div class='log'>
       <div>LOG ACTUAL RASPBERRY-PI</div>
       <div id="logContainer"></div>
     </div>
-    <div style="border-width: 1px;border-style: solid;margin-top:10px; padding:10px">
+    <div class='pastactions'>
       <div>ÚLTIMOS RIEGOS</div>
       <div id="pastActionsContainer"></div>
     </div>
