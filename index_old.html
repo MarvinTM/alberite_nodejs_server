@@ -1,0 +1,351 @@
+<html>
+<head>
+<link rel="stylesheet prefetch" href="http://yui.yahooapis.com/pure/0.4.2/pure-min.css">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<script>
+
+function doRemoteRequest(endPoint, callback) {
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+      if (xmlhttp.status == 200) {
+        var response = JSON.parse(xmlhttp.responseText);
+        if(response && response.opCode && response.opCode!==0){
+          alert("ERROR: "+response.message);
+        } else {
+          callback(JSON.parse(xmlhttp.responseText));
+        }
+      } else if (xmlhttp.status == 400) {
+        console.error('There was an error 400');
+      } else {
+        console.error('something else other than 200 was returned');
+      }
+    }
+  };
+
+  xmlhttp.open("GET", endPoint, true);
+  xmlhttp.send();
+};
+
+setInterval(function() {
+  doRemoteRequest('loginfo', function(logInfo) {
+    if(logInfo.length===0) {
+      document.getElementById("logContainer").innerHTML = 'Nada'; 
+      return;
+    }
+    var logTable = "<table style='width:100%'><tr'><th style='width:40%'>MENSAJE</th><th style='width:50%'>FECHA</th><th>IP</th></tr>";
+    logInfo.forEach(function(logrow) {
+      var bgColor;
+      if(logrow.type==='INFO'){
+        bgColor = '#00ff00';
+      } else if (logrow.type==='ACTION') {
+        bgColor = '#00ffff';
+      } else {
+        bgColor = '#ff0000';
+      }
+      logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.message+"</td><td>"+new Date(logrow.messagedate).toLocaleString()+"</td><td>"+logrow.externalip+"</td>";
+    });        
+    document.getElementById("logContainer").innerHTML = logTable; 
+  });
+
+  doRemoteRequest('actionsInfo', function(actionsInfo) {
+    if(actionsInfo.length===0) {
+      document.getElementById("actionsContainer").innerHTML = '<b>Nada</b>'; 
+      return;
+    }
+    var logTable = "<table style='width:100%'><tr'><th style='width:40%'>FASE</th><th style='width:50%'>DURACIÓN (segundos)</th></tr>";
+    actionsInfo.forEach(function(logrow) {
+      var bgColor;
+      if(logrow.programmed_action!==null) {
+        bgColor = '#ffff00';
+      } else {
+        bgColor = '#00ffff';
+      }
+      logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.phase+"</td><td>"+logrow.time+"</td>";
+    });        
+    document.getElementById("actionsContainer").innerHTML = logTable; 
+
+  });
+
+  doRemoteRequest('programmedActionsInfo', function(actionsInfo) {
+    var jsonProgActions = JSON.stringify(actionsInfo);
+    if(window.GLOBAL_PROGRAMMEDACTIONSINFO && jsonProgActions===window.GLOBAL_PROGRAMMEDACTIONSINFO) {
+      //Programmed actions didn't change. No need to rebuild table;
+      return;
+    }
+    window.GLOBAL_PROGRAMMEDACTIONSINFO=jsonProgActions;
+    
+    var logTable = "<table style='width:100%'><tr'><th style='width:15%'>FASE</th><th style='width:20%'>DURACIÓN (segundos)</th><th style='width:45%'>FRECUENCIA</th><th style='width:15%'>HORA</th><th style='width:5%'></th></tr>";
+    actionsInfo.forEach(function(logrow) {
+      var bgColor;
+      bgColor = '#ffff00';
+      logTable+="<tr style='background-color:"+bgColor+";'><td>"+logrow.phase+"</td><td>"+logrow.time+"</td>";
+      logTable+="<td>"+logrow.frequency+"</td><td>"+logrow.hour+"</td><td><img id='program_cancel_"+logrow.index+"' src='img/cancel.png' height='20' style='vertical-align: middle;' /></td>";
+    });
+    
+    document.getElementById("programmedActionsContainer").innerHTML = logTable;
+
+    actionsInfo.forEach(function(logrow) {
+      document.getElementById("program_cancel_"+logrow.index).onclick = function() {
+        doRequestForCancelProgrammedAction(logrow.index);
+      };
+    }); 
+
+  });
+
+  doRemoteRequest('pastActionsInfo', function(actionsInfo) {
+    var jsonPastActions = JSON.stringify(actionsInfo);
+    if(window.GLOBAL_PASTACTIONSINFO && jsonPastActions===window.GLOBAL_PASTACTIONSINFO) {
+      //Past actions didn't change. No need to rebuild table;
+      return;
+    }
+    window.GLOBAL_PASTACTIONSINFO=jsonPastActions;
+    if(actionsInfo.length===0) {
+      document.getElementById("pastActionsContainer").innerHTML = '<b>Nada</b>'; 
+      return;
+    }
+    var logTable = "<table ><thead><tr><th style='width:10%'>FASE</th><th style='width:10%'>DURACIÓN (segundos)</th><th style='width:50%'>FECHA</th><th style='width:10%'>HORA</th></tr></thead>";
+    actionsInfo.forEach(function(logrow) {
+      var bgColor;
+      if(logrow.programmed_action) {
+        bgColor = '#ffff00';
+      } else {
+        bgColor = '#00ffff';
+      }
+      var theDate = new Date(logrow.date);
+      theDate.setHours(theDate.getHours()-2);
+      var date = theDate.toLocaleDateString();
+      var time = theDate.toLocaleTimeString();
+      time=time.substring(0, time.length-4); //style='background-color:"+bgColor+";'
+      logTable+="<tr><td>"+logrow.phase+"</td><td>"+logrow.duration+"</td>";
+      logTable+="<td>"+(date)+"</td>";
+      logTable+="<td>"+(time)+"</td>";
+    });        
+    document.getElementById("pastActionsContainer").innerHTML = logTable; 
+
+  });
+
+
+
+
+}, 1000);
+
+function element(id) {
+  return document.getElementById(id);
+};
+
+function doRequestForSystemAction(actionId, duration) {
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+      if (xmlhttp.status == 200) {
+        alert('Éxito');
+      } else if (xmlhttp.status == 400) {
+        alert('Error al iniciar acción: '+400);
+      } else {
+        alert('Error al iniciar acción: '+xmlhttp.status);
+      }
+    }
+  };
+
+  xmlhttp.open("GET", "/startSystemAction?pin="+actionId+"&duration="+(duration?duration:5)+"&", true);
+  xmlhttp.send();
+};
+
+function doRequestForSystemActionFromInput() {
+  var phase = document.getElementById("action_phase").value;
+  var time = document.getElementById("action_duration").value;
+  doRemoteRequest("/startSystemAction?pin="+phase+"&duration="+time+"&", function(actionsInfo) {
+    alert('Riego iniciado');
+  });
+};
+
+function doRequestForCancelProgrammedAction(actionId) {
+  doRemoteRequest("/cancelProgrammedAction?programmedAction="+actionId, function(actionsInfo) {
+    alert('Programación eliminada');
+  });
+};
+
+function doRequestForProgramInsertion() {
+  var phase = document.getElementById("program_phase").value;
+  var time = document.getElementById("program_duration").value;
+  var frequency = document.getElementById("program_frequency").value;
+  var hour = document.getElementById("program_hour").value+":"+document.getElementById("program_minute").value+":"+document.getElementById("program_second").value;
+  doRemoteRequest("/insertProgrammedAction?phase="+phase+"&time="+time+"&frequency="+frequency+"+&hour='"+hour+"'", function(actionsInfo) {
+    alert('Riego programado');
+  });
+};
+
+
+function doRegisterUser() {
+  document.location = "/registerUser";
+};
+
+
+function doLogout() {
+  document.location = "/logout";
+};
+
+
+</script>
+  <div class="body"></div>
+  <div class="grad"></div>
+<br>
+
+<div id="mainContainer" class='mainContainer'>
+  <div id="leftContainer" style="width:100%;float:left;padding:5px;margin-left: 20px;margin-right: 20px;">
+    <div class='current' >
+      <div>RIEGOS ACTUALES EN COLA</div>
+      <div id="actionsContainer"></div>
+    </div>
+    <div class='programmed'>
+      <div>RIEGOS PROGRAMADOS</div>
+      <div id="programmedActionsContainer"></div>
+      <div id="newProgrammedAction"</div>
+        <select id='program_phase' style='width:15%'>
+          <option value=1>Piscina fase 1</option>        
+          <option value=2>Piscina fase 2</option>
+          <option value=3>Aspersores fase 1</option>
+          <option value=4>Entrada+Cerezo</option>
+          <option value=5>Huerta</option>
+        </select>
+      
+        <select id='program_duration' style='width:20%'>
+          <option value=10>Pulso (10 segundos)</option>
+          <option value=30>30 segundos</option>
+          <option value=60>1 minuto</option>
+          <option value=120>2 minutos</option>
+          <option value=180>3 minutos</option>
+          <option value=240>4 minutos</option>
+          <option value=300>5 minutos</option>
+          <option value=600>10 minutos</option>
+          <option value=900>15 minutos</option>
+          <option value=1200>20 minutos</option>
+        </select>
+
+        <select id='program_frequency' style='width:45%'>
+          <option value='DIARIA'>DIARIA</option>
+          <option value='DÍAS IMPARES'>DÍAS IMPARES</option>
+          <option value='DÍAS PARES'>DÍAS PARES</option>
+        </select>
+        
+        <div style='width:15%; display:inline;'>  
+          <input id='program_hour' style='width:20px'/>:<input id='program_minute' style='width:20px'/>:<input id='program_second' style='width:20px'/>
+        </div>
+
+        <img id='program_create' src='img/save.png' width='20' style='vertical-align: middle;' />
+      </div>
+    </div>
+    <div class='immediate'>
+      <div>RIEGO DIRECTO</div>
+      <div id="newAction"</div>
+        <select id='action_phase' style='width:15%'>
+          <option value=1>Piscina fase 1</option>
+          <option value=2>Piscina fase 2</option>
+          <option value=3>Aspersores fase 1</option>
+          <option value=4>Entrada+Cerezo</option>
+          <option value=5>Huerta</option>
+        </select>
+
+        <select id='action_duration' style='width:20%'>
+          <option value=10>Pulso (10 segundos)</option>
+          <option value=30>30 segundos</option>
+          <option value=60>1 minuto</option>
+          <option value=120>2 minutos</option>
+          <option value=180>3 minutos</option>
+          <option value=240>4 minutos</option>
+          <option value=300>5 minutos</option>
+          <option value=600>10 minutos</option>
+          <option value=900>15 minutos</option>
+          <option value=1200>20 minutos</option>
+        </select>
+
+        <img id='action_create' src='img/ok.png' width='20'  style='vertical-align: middle;'/>
+      </div>
+
+<!--
+      <div id="riegoContainer">
+        <div id="poolPhase1">Regar Piscina fase 1</div>
+        <div id="poolPhase2">Regar Piscina fase 2</div>
+        <div id="mainPhase1">Regar Aspersores fase 1</div>
+        <div id="backyard">Regar Zona cerezo</div>
+        <div id="orchard">Regar Huerta</div>
+      </div>
+--!>
+    </div>
+    <div class='options'>
+      <div>OPCIONES</div>
+      <div id="optionsContainer">
+        <div id="logout">Salir</div>
+      </div>
+    </div>
+  </div>
+  <div id="rightContainer" style="width:100%;float:left;padding:5px;margin-left: 20px;margin-right: 20px;">
+    <div class='log'>
+      <div>LOG ACTUAL RASPBERRY-PI</div>
+      <div id="logContainer"></div>
+    </div>
+    <div class='pastactions'>
+      <div>ÚLTIMOS RIEGOS</div>
+      <div id="pastActionsContainer"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+element('logout').style.cursor = 'pointer';
+element('logout').style.color = 'blue';
+
+/*
+element('poolPhase1').style.cursor = 'pointer';
+element('poolPhase2').style.cursor = 'pointer';
+element('mainPhase1').style.cursor = 'pointer';
+element('backyard').style.cursor = 'pointer';
+element('orchard').style.cursor = 'pointer';
+element('logout').style.cursor = 'pointer';
+element('poolPhase1').style.color = 'blue';
+element('poolPhase2').style.color = 'blue';
+element('mainPhase1').style.color = 'blue';
+element('backyard').style.color = 'blue';
+element('orchard').style.color = 'blue';
+element('logout').style.color = 'blue';
+
+
+element('poolPhase1').onclick = function() {
+  doRequestForSystemAction(1);
+};
+
+element('poolPhase2').onclick = function() {
+  doRequestForSystemAction(2);
+};
+
+element('mainPhase1').onclick = function() {
+  doRequestForSystemAction(3);
+};
+
+element('backyard').onclick = function() {
+  doRequestForSystemAction(4);
+};
+
+element('orchard').onclick = function() {
+  doRequestForSystemAction(5);
+};
+*/
+element('logout').onclick = function() {
+  doLogout();
+};
+
+element('program_create').onclick = function() {
+  doRequestForProgramInsertion();
+};
+
+element('action_create').onclick = function() {
+  doRequestForSystemActionFromInput();
+};
+
+
+</script>
+</body>
+</html>

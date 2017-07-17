@@ -328,7 +328,7 @@ app.get('/', function(req, res) {
 
 
 app.get('/main', ensureAuthenticated, function(req, res) {
-  fs.readFile('index.html', 'utf8', function(err, data) {
+  fs.readFile('index_old.html', 'utf8', function(err, data) {
     res.send(data);
   });
 });
