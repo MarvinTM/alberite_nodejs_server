@@ -333,6 +333,12 @@ app.get('/main', ensureAuthenticated, function(req, res) {
   });
 });
 
+app.get('/react', ensureAuthenticated, function(req, res) {
+  fs.readFile('index.html', 'utf8', function(err, data) {
+    res.send(data);
+  });
+});
+
 app.get('/program', ensureAuthenticated, function(req, res) {
   fs.readFile('program.html', 'utf8', function(err, data) {
     res.send(data);
