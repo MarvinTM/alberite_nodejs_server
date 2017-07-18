@@ -216,6 +216,7 @@ function ensureAuthenticated(req, res, next) {
 app.get('/loginfo', ensureAuthenticated, function (req, res) {
   var queryStr = 'SELECT id, message, messagedate, type, externalip FROM loginfo ORDER BY messagedate DESC LIMIT 20';
   executeQuery(queryStr, null, function(results) {
+    res.header('Access-Control-Allow-Origin', '*');
     res.json(results);
   });
 });
@@ -223,6 +224,7 @@ app.get('/loginfo', ensureAuthenticated, function (req, res) {
 app.get('/actionsInfo', ensureAuthenticated, function (req, res) {
   var querySystem = "SELECT * FROM ACTIONS ORDER BY INDEX ASC";
   executeQuery(querySystem, null, function(results) {
+    res.header('Access-Control-Allow-Origin', '*');
     res.json(results); 
   });
 });
@@ -230,6 +232,7 @@ app.get('/actionsInfo', ensureAuthenticated, function (req, res) {
 app.get('/pastActionsInfo', ensureAuthenticated, function (req, res) {
   var querySystem = "SELECT * FROM PAST_ACTIONS ORDER BY INDEX DESC LIMIT 15";
   executeQuery(querySystem, null, function(results) {
+    res.header('Access-Control-Allow-Origin', '*');
     res.json(results);
   });
 });
@@ -237,6 +240,7 @@ app.get('/pastActionsInfo', ensureAuthenticated, function (req, res) {
 app.get('/programmedActionsInfo', ensureAuthenticated, function (req, res) {
   var querySystem = "SELECT * FROM PROGRAMMED_ACTIONS ORDER BY INDEX ASC";
   executeQuery(querySystem, null, function(results) {
+    res.header('Access-Control-Allow-Origin', '*');
     res.json(results);
   });
 });
@@ -244,6 +248,7 @@ app.get('/programmedActionsInfo', ensureAuthenticated, function (req, res) {
 app.get('/cancelProgrammedAction', ensureAuthenticated, function (req, res) {
   deleteProgrammedAction(req.query.programmedAction, function() {
     var response = {message: 'Everything is ok', opCode: 0};
+    res.header('Access-Control-Allow-Origin', '*');
     res.json(response); 
   });
 });
@@ -252,9 +257,11 @@ app.get('/insertProgrammedAction', ensureAuthenticated, function (req, res) {
   var programmedAction = req.query;
   insertProgrammedAction(programmedAction.phase, programmedAction.time, programmedAction.frequency, programmedAction.hour, function() {
     var response = {message: 'Everything is ok', opCode: 0};
+    res.header('Access-Control-Allow-Origin', '*');
     res.json(response);
   }, function(error){
     var response = {message: 'Error al crear acción programada: '+error, opCode: 1};
+    res.header('Access-Control-Allow-Origin', '*');
     res.json(response);
   });
 });
@@ -310,6 +317,7 @@ app.get('/startSystemAction', ensureAuthenticated, function (req, res) {
   var duration = req.query.duration;
   console.log('Initiating action with pin: '+pin);
   initiateSystemAction(pin, duration, function(results) {
+    res.header('Access-Control-Allow-Origin', '*');
     res.json({message: 'Everything is ok', opCode: 0});
   });
 });
@@ -318,7 +326,7 @@ app.get('/startSystemAction', ensureAuthenticated, function (req, res) {
 //PAGES ENDPOINTS
 app.get('/', function(req, res) {
   if (req.isAuthenticated()) {
-    res.redirect('/main'); 
+    res.redirect('/react'); 
   } else {
     fs.readFile('login.html', 'utf8', function(err, data) {
       res.send(data);
