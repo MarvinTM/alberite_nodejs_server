@@ -213,7 +213,7 @@ function ensureAuthenticated(req, res, next) {
 
 
 // ENDPOINTS (APPLICATION)
-app.get('/loginfo', ensureAuthenticated, function (req, res) {
+app.get('/loginfo',  function (req, res) {
   var queryStr = 'SELECT id, message, messagedate, type, externalip FROM loginfo ORDER BY messagedate DESC LIMIT 20';
   executeQuery(queryStr, null, function(results) {
     res.header('Access-Control-Allow-Origin', '*');
