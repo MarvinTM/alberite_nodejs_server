@@ -34,10 +34,12 @@ function executeQuery(queryStr, params, success, errorFunc) {
   });
 }
 
+var gpioState=null;
+
 function writeLogInfo(logInfo, callback) {
-  var queryStr = "INSERT INTO LOGINFO VALUES ('";
-  queryStr += uuidV4()+"','"+logInfo.message+"','"+logInfo.messagedate+"','"+logInfo.type+"', '"+logInfo.externalip+"')";
-  executeQuery(queryStr, null, function(results) {
+  var queryStr = "INSERT INTO LOGINFO VALUES ($1, $2, $3, $4, $5, $6)";
+  var params = [uuidV4(), logInfo.message, logInfo.messagedate, logInfo.type, logInfo.externalip, logInfo.gpioState];
+  executeQuery(queryStr, params, function(results) {
     callback();
   });
 
@@ -213,6 +215,8 @@ function ensureAuthenticated(req, res, next) {
 
 
 // ENDPOINTS (APPLICATION)
+
+//WebApp API
 app.get('/loginfo',  function (req, res) {
   var queryStr = 'SELECT id, message, messagedate, type, externalip FROM loginfo ORDER BY messagedate DESC LIMIT 20';
   executeQuery(queryStr, null, function(results) {
@@ -235,6 +239,11 @@ app.get('/pastActionsInfo', ensureAuthenticated, function (req, res) {
     res.header('Access-Control-Allow-Origin', '*');
     res.json(results);
   });
+});
+
+app.get('/gpioInfo', ensureAuthenticated, function (req, res) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.json(gpioState);
 });
 
 app.get('/programmedActionsInfo', ensureAuthenticated, function (req, res) {
@@ -266,10 +275,28 @@ app.get('/insertProgrammedAction', ensureAuthenticated, function (req, res) {
   });
 });
 
-  
+app.get('/startSystemAction', ensureAuthenticated, function (req, res) {
+  var pin = req.query.pin;
+  var duration = req.query.duration;
+  console.log('Initiating action with pin: '+pin);
+  initiateSystemAction(pin, duration, function(results) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.json({message: 'Everything is ok', opCode: 0});
+  });
+});
+
+//RaspPi API
+
+function setGpioState(req) {
+  if(req && req.gpioState) {
+    gpioState = JSON.parse(req.gpioState);
+  }
+}
+
 app.post('/ping', function (req, res) {
   var bodyObj = req.body;
   console.log(JSON.stringify(bodyObj));
+  setGpioState(bodyObj);
   writeLogInfo(bodyObj, function(results) {
     var querySystem = "SELECT * FROM ACTIONS";
     executeQuery(querySystem, null, function(results) {
@@ -286,6 +313,7 @@ app.post('/ping', function (req, res) {
 
 app.post('/systemInitiating', function (req, res) {
   var bodyObj = req.body;
+  setGpioState(bodyObj);
   writeLogInfo(bodyObj, function(results) {
     response = {message: 'Everything is ok', opCode: 0};
     res.json(response);
@@ -294,6 +322,7 @@ app.post('/systemInitiating', function (req, res) {
 
 app.post('/systemHasStarted', function (req, res) {
   var bodyObj = req.body;
+  setGpioState(bodyObj);
   writeLogInfo(bodyObj, function(results) {
     var response = {message: 'Everything is ok', opCode: 0};
     res.json(response);
@@ -303,6 +332,7 @@ app.post('/systemHasStarted', function (req, res) {
 
 app.post('/systemHasFinished', function (req, res) {
   var bodyObj = req.body;
+  setGpioState(bodyObj);
   writeLogInfo(bodyObj, function(results) {
     //Delete system action from table
     moveActionToArchive(function() {
@@ -311,17 +341,6 @@ app.post('/systemHasFinished', function (req, res) {
     });
   });
 });
-
-app.get('/startSystemAction', ensureAuthenticated, function (req, res) {
-  var pin = req.query.pin;
-  var duration = req.query.duration;
-  console.log('Initiating action with pin: '+pin);
-  initiateSystemAction(pin, duration, function(results) {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.json({message: 'Everything is ok', opCode: 0});
-  });
-});
-
 
 //PAGES ENDPOINTS
 app.get('/', function(req, res) {
