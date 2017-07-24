@@ -204,8 +204,10 @@ app.get('/logout', ensureAuthenticated, function(req, res){
   res.redirect('/');
 });
 
+const forceOpened = false;
+
 function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
+  if (req.isAuthenticated() || forceOpened) {
     // req.user is available for use here
     return next(); }
 
