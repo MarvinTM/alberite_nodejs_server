@@ -304,11 +304,15 @@ app.post('/ping', function (req, res) {
     executeQuery(querySystem, null, function(results) {
       var response;
       if(results.length!=0) {
-        response = {message: 'System active', opCode: 1, systemInfo: results};
+        //Delete system action from table
+        moveActionToArchive(function() {
+          response = {message: 'System active', opCode: 1, systemInfo: results};
+          res.json(response);
+        });
       } else {
         response = {message: 'Everything is ok', opCode: 0};
+        res.json(response);
       }
-      res.json(response);     
     });
   });
 });
@@ -336,11 +340,8 @@ app.post('/systemHasFinished', function (req, res) {
   var bodyObj = req.body;
   setGpioState(bodyObj);
   writeLogInfo(bodyObj, function(results) {
-    //Delete system action from table
-    moveActionToArchive(function() {
-      var response = {message: 'Everything is ok', opCode: 0};
-      res.json(response);
-    });
+    var response = {message: 'Everything is ok', opCode: 0};
+    res.json(response);
   });
 });
 
