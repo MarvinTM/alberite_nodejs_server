@@ -113,6 +113,14 @@ function deleteProgrammedAction(programmedAction, callback) {
   });
 }
 
+function deleteAction(action, callback) {
+  console.log("Deleting programmed action: " + action);
+  var queryStr = "DELETE FROM ACTIONS WHERE INDEX=$1";
+  executeQuery(queryStr, [action], function(results) {
+    callback();
+  });
+}
+
 function insertProgrammedAction(
   phase,
   time,
@@ -311,6 +319,14 @@ app.get("/cancelProgrammedAction", ensureAuthenticated, function(req, res) {
   });
 });
 
+app.get("/cancelAction", ensureAuthenticated, function(req, res) {
+  deleteAction(req.query.programmedAction, function() {
+    var response = { message: "Everything is ok", opCode: 0 };
+    res.header("Access-Control-Allow-Origin", "*");
+    res.json(response);
+  });
+});
+
 app.get("/insertProgrammedAction", ensureAuthenticated, function(req, res) {
   var programmedAction = req.query;
   insertProgrammedAction(
@@ -357,7 +373,7 @@ app.post("/ping", function(req, res) {
   console.log(JSON.stringify(bodyObj));
   setGpioState(bodyObj);
   writeLogInfo(bodyObj, function(results) {
-    var querySystem = "SELECT * FROM ACTIONS";
+    var querySystem = "SELECT * FROM ACTIONS ORDER BY TIME";
     executeQuery(querySystem, null, function(results) {
       var response;
       if (results.length != 0) {
