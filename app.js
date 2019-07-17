@@ -320,7 +320,7 @@ app.get("/cancelProgrammedAction", ensureAuthenticated, function(req, res) {
 });
 
 app.get("/cancelAction", ensureAuthenticated, function(req, res) {
-  deleteAction(req.query.programmedAction, function() {
+  deleteAction(req.query.action, function() {
     var response = { message: "Everything is ok", opCode: 0 };
     res.header("Access-Control-Allow-Origin", "*");
     res.json(response);
