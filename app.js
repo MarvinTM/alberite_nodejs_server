@@ -373,7 +373,7 @@ app.post("/ping", function(req, res) {
   console.log(JSON.stringify(bodyObj));
   setGpioState(bodyObj);
   writeLogInfo(bodyObj, function(results) {
-    var querySystem = "SELECT * FROM ACTIONS ORDER BY TIME";
+    var querySystem = "SELECT * FROM ACTIONS ORDER BY INDEX";
     executeQuery(querySystem, null, function(results) {
       var response;
       if (results.length != 0) {
