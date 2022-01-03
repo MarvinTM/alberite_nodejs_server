@@ -19,6 +19,11 @@
   "dependencies": {
     "body-parser": "^1.17.1",
     "express": "^4.15.2",
-    "pg": "^6.1.4"
+    "pg": "^6.1.4",
+    "uuidv4": "^6.2.12",
+    "passport-local-authenticate": "1.2.0",
+    "passport-local": "^1.0.0",
+    "express-session": "^1.17.2",
+    "passport": "^0.5.2"
   }
 }
